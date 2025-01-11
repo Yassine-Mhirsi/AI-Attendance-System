@@ -29,21 +29,21 @@ dataset/
 ### 4. Testing the Model
 
 **Model Location**:  
-The model is pre-trained and located in `runs/train/exp14/weights/`:
+The model is pre-trained and located in `runs/train/exp15/weights/`:
 - `best.pt`: The best weights achieved during training (optimal performance on validation data).
 - `last.pt`: The weights from the last training epoch (useful for continued training or testing).
 
 #### For Live Video Feed (e.g., webcam):
 Run the following command to use the webcam as the input source:
 ```bash
-python detect.py --weights runs/train/exp14/weights/last.pt --img 640 --source 0
+python detect.py --weights runs/train/exp15/weights/last.pt --img 640 --source 0
 ``` 
 - `--source 0`: Indicates live video feed from your webcam.
 
 #### For Specific Images:
 To test the model on a folder of images, run the following command:
 ```bash
-python detect.py --weights runs/train/exp14/weights/last.pt --img 640 --source dataset/images/
+python detect.py --weights runs/train/exp15/weights/last.pt --img 640 --source dataset/images/
 ``` 
 
 - `--source 0 dataset/images/`: Specifies the folder containing images for testing.
