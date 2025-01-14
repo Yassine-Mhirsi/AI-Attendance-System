@@ -64,6 +64,13 @@ from utils.general import (
     xyxy2xywh,
 )
 from utils.torch_utils import select_device, smart_inference_mode
+from attendance_logger import log_name
+import firebase_admin
+from firebase_admin import credentials, db
+cred = credentials.Certificate("serviceAccountKey.json")
+firebase_admin.initialize_app(cred, {
+    "databaseURL": "https://iot-project-d7202-default-rtdb.europe-west1.firebasedatabase.app/"
+})
 
 
 @smart_inference_mode()
@@ -214,7 +221,7 @@ def run(
 
         # Define the path for the CSV file
         csv_path = save_dir / "predictions.csv"
-
+        logged_names = set()
         # Create or append to the CSV file
         def write_to_csv(image_name, prediction, confidence):
             """Writes prediction data for an image to a CSV file, appending if the file exists."""
@@ -256,6 +263,11 @@ def run(
                     label = names[c] if hide_conf else f"{names[c]}"
                     confidence = float(conf)
                     confidence_str = f"{confidence:.2f}"
+
+                    if label not in logged_names:
+                        log_name(label)  # Log to CSV
+                        logged_names.add(label)
+
 
                     if save_csv:
                         write_to_csv(p.name, label, confidence_str)
