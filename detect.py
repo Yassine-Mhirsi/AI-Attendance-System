@@ -265,7 +265,9 @@ def run(
                     confidence_str = f"{confidence:.2f}"
 
                     if label not in logged_names:
-                        log_name(label)  # Log to CSV
+                        student_id = label
+                        student_unique_id = hash(label) % 10000  # Simple unique ID (can customize)
+                        log_name(student_id, label, student_unique_id)
                         logged_names.add(label)
 
 
