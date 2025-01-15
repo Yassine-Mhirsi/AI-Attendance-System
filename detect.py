@@ -258,39 +258,43 @@ def run(
                     s += f"{n} {names[int(c)]}{'s' * (n > 1)}, "  # add to string
 
                 # Write results
+                
+                confidence_threshold = 0.80  # 80% confidence threshold
                 for *xyxy, conf, cls in reversed(det):
                     c = int(cls)  # integer class
-                    label = names[c] if hide_conf else f"{names[c]}"
                     confidence = float(conf)
-                    confidence_str = f"{confidence:.2f}"
+                    if confidence >= confidence_threshold:  # Apply confidence filter
+                        label = names[c] if hide_conf else f"{names[c]}"
+                        confidence_str = f"{confidence:.2f}"
 
-                    if label not in logged_names:
-                        student_id = label
-                        student_unique_id = hash(label) % 10000  # Simple unique ID (can customize)
-                        log_name(student_id, label, student_unique_id)
-                        logged_names.add(label)
+                        if label not in logged_names:
+                            student_id = label  # Use label as student ID (or unique identifier if applicable)
+                            student_unique_id = hash(label) % 10000  # Simple unique ID generation
+                            log_name(student_id, label, student_unique_id)
+                            logged_names.add(label)
 
+                        if save_csv:
+                            write_to_csv(p.name, label, confidence_str)
 
-                    if save_csv:
-                        write_to_csv(p.name, label, confidence_str)
+                        if save_txt:  # Write to file
+                            if save_format == 0:
+                                coords = (
+                                    (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()
+                                )  # normalized xywh
+                            else:
+                                coords = (torch.tensor(xyxy).view(1, 4) / gn).view(-1).tolist()  # xyxy
+                            line = (cls, *coords, conf) if save_conf else (cls, *coords)  # label format
+                            with open(f"{txt_path}.txt", "a") as f:
+                                f.write(("%g " * len(line)).rstrip() % line + "\n")
 
-                    if save_txt:  # Write to file
-                        if save_format == 0:
-                            coords = (
-                                (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()
-                            )  # normalized xywh
-                        else:
-                            coords = (torch.tensor(xyxy).view(1, 4) / gn).view(-1).tolist()  # xyxy
-                        line = (cls, *coords, conf) if save_conf else (cls, *coords)  # label format
-                        with open(f"{txt_path}.txt", "a") as f:
-                            f.write(("%g " * len(line)).rstrip() % line + "\n")
+                        if save_img or save_crop or view_img:  # Add bbox to image
+                            label = None if hide_labels else (names[c] if hide_conf else f"{names[c]} {conf:.2f}")
+                            annotator.box_label(xyxy, label, color=colors(c, True))
+                        if save_crop:
+                            save_one_box(xyxy, imc, file=save_dir / "crops" / names[c] / f"{p.stem}.jpg", BGR=True)
+                    else:
+                        print(f"Skipping detection for class '{names[c]}' with confidence {confidence:.2f}")
 
-                    if save_img or save_crop or view_img:  # Add bbox to image
-                        c = int(cls)  # integer class
-                        label = None if hide_labels else (names[c] if hide_conf else f"{names[c]} {conf:.2f}")
-                        annotator.box_label(xyxy, label, color=colors(c, True))
-                    if save_crop:
-                        save_one_box(xyxy, imc, file=save_dir / "crops" / names[c] / f"{p.stem}.jpg", BGR=True)
 
             # Stream results
             im0 = annotator.result()
